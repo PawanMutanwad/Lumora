@@ -3,12 +3,14 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
+const authRouter = require("./routes/auth/auth-routes");
+
 const app = express();
 
 // MongoDB Connection
 mongoose
   .connect(
-    "mongodb+srv://pawanmutanwad:LTneklFxL2stHeIb@cluster0.qtclwtu.mongodb.net/"
+    "mongodb://pawanmutanwad:LTneklFxL2stHeIb@ac-qfitfju-shard-00-00.qtclwtu.mongodb.net:27017,ac-qfitfju-shard-00-01.qtclwtu.mongodb.net:27017,ac-qfitfju-shard-00-02.qtclwtu.mongodb.net:27017/?ssl=true&replicaSet=atlas-kf2zmm-shard-0&authSource=admin&appName=Cluster0"
   )
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error(err));
@@ -24,6 +26,7 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
+app.use('/api/auth',authRouter);
 
 // Test Route
 app.get("/", (req, res) => {
