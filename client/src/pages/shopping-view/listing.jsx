@@ -1,5 +1,7 @@
 import ProductFilter from "@/components/shopping-view/filter";
 import ShoppingProductTile from "@/components/shopping-view/product-tile";
+import ProductDetailsDialog from "@/components/shopping-view/product-details";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +12,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowUpDownIcon } from "lucide-react";
 import { sortOptions } from "@/config";
-import { fetchAllFilteredProducts } from "@/store/shop/products-slice";
+
+import {
+  fetchAllFilteredProducts,
+  fetchProductDetails,
+} from "@/store/shop/products-slice";
+
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
@@ -18,9 +25,7 @@ import { useSearchParams } from "react-router-dom";
 function createSearchParamsHelper(filterParams) {
   const queryParams = [];
 
-  for (const [key, value] of Object.entries(
-    filterParams
-  )) {
+  for (const [key, value] of Object.entries(filterParams)) {
     if (Array.isArray(value) && value.length > 0) {
       const paramValue = value.join(",");
 
@@ -39,12 +44,13 @@ function ShoppingListing() {
   const [searchParams, setSearchParams] =
     useSearchParams();
 
-  const { productList } = useSelector(
-    (state) => state.shopProducts
-  );
+  const { productList, productDetails } =
+    useSelector((state) => state.shopProducts);
 
   const [filters, setFilters] = useState({});
   const [sort, setSort] = useState(null);
+  const [openDetailsDialog, setOpenDetailsDialog] =
+    useState(false);
 
   function handleSort(value) {
     setSort(value);
@@ -53,9 +59,8 @@ function ShoppingListing() {
   function handleFilter(getSectionId, getCurrentOption) {
     let cpyFilters = { ...filters };
 
-    const indexOfCurrentSection = Object.keys(
-      cpyFilters
-    ).indexOf(getSectionId);
+    const indexOfCurrentSection =
+      Object.keys(cpyFilters).indexOf(getSectionId);
 
     if (indexOfCurrentSection === -1) {
       cpyFilters = {
@@ -88,6 +93,14 @@ function ShoppingListing() {
     );
   }
 
+  function handleGetProductDetails(
+    getCurrentProductId
+  ) {
+    dispatch(
+      fetchProductDetails(getCurrentProductId)
+    );
+  }
+
   useEffect(() => {
     setSort("price-lowtohigh");
   }, []);
@@ -112,19 +125,25 @@ function ShoppingListing() {
         new URLSearchParams(createQueryString)
       );
     }
-  }, [filters]);
+  }, [filters, setSearchParams]);
 
   useEffect(() => {
-    dispatch(fetchAllFilteredProducts());
-  }, [dispatch]);
+    if (filters !== null && sort !== null) {
+      dispatch(
+        fetchAllFilteredProducts({
+          filterParams: filters,
+          sortParams: sort,
+        })
+      );
+    }
+  }, [dispatch, filters, sort]);
 
-  console.log(productList, "productList");
+  useEffect(() => {
+    if (productDetails !== null)
+      setOpenDetailsDialog(true);
+  }, [productDetails]);
 
-  console.log(
-    filters,
-    searchParams,
-    "filters"
-  );
+  console.log(productDetails, "productDetails");
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6 p-4 md:p-6">
@@ -185,11 +204,20 @@ function ShoppingListing() {
                 <ShoppingProductTile
                   key={productItem._id}
                   product={productItem}
+                  handleGetProductDetails={
+                    handleGetProductDetails
+                  }
                 />
               ))
             : null}
         </div>
       </div>
+
+      <ProductDetailsDialog
+        open={openDetailsDialog}
+        setOpen={setOpenDetailsDialog}
+        productDetails={productDetails}
+      />
     </div>
   );
 }

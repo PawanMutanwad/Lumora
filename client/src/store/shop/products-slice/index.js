@@ -4,14 +4,40 @@ import axios from "axios";
 const initialState = {
   isLoading: false,
   productList: [],
+  productDetails: null,
 };
 
 export const fetchAllFilteredProducts = createAsyncThunk(
   "/products/fetchAllProducts",
-  async () => {
-    const result = await axios.get(
-      "http://localhost:5000/api/shop/products/get"
+  async ({ filterParams, sortParams }) => {
+    console.log(
+      fetchAllFilteredProducts,
+      "fetchAllFilteredProducts"
     );
+
+    const query = new URLSearchParams({
+      ...filterParams,
+      sortBy: sortParams,
+    });
+
+    const result = await axios.get(
+      `http://localhost:5000/api/shop/products/get?${query}`
+    );
+
+    console.log(result);
+
+    return result?.data;
+  }
+);
+
+export const fetchProductDetails = createAsyncThunk(
+  "/products/fetchProductDetails",
+  async (id) => {
+    const result = await axios.get(
+      `http://localhost:5000/api/shop/products/get/${id}`
+    );
+
+    console.log(result);
 
     return result?.data;
   }
@@ -33,14 +59,26 @@ const shoppingProductSlice = createSlice({
           state.productList = action.payload.data;
         }
       )
+      .addCase(fetchAllFilteredProducts.rejected, (state) => {
+        state.isLoading = false;
+        state.productList = [];
+      })
+
+      .addCase(fetchProductDetails.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(
-        fetchAllFilteredProducts.rejected,
-        (state) => {
+        fetchProductDetails.fulfilled,
+        (state, action) => {
           state.isLoading = false;
-          state.productList = [];
+          state.productDetails = action.payload.data;
         }
-      );
+      )
+      .addCase(fetchProductDetails.rejected, (state) => {
+        state.isLoading = false;
+        state.productDetails = null;
+      });
   },
 });
 
-export default shoppingProductSlice.reducer;  
+export default shoppingProductSlice.reducer;
