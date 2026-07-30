@@ -6,7 +6,7 @@ const {
   editProduct,
   deleteProduct,
   fetchAllProducts,
-} = require("../../controllers/admin/products-controller");
+} = require("../../controllers/admin/product-controller");
 
 const { upload } = require("../../helpers/cloudinary");
 

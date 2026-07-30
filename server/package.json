@@ -22,7 +22,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.4.0",
     "mongoose": "^9.7.2",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "paypal-rest-sdk": "^1.8.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

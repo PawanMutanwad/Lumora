@@ -7,13 +7,25 @@ const registerUser = async (req, res) => {
   const { userName, email, password } = req.body;
 
   try {
-    // Check if user already exists
-    const checkUser = await User.findOne({ email });
+    if (!userName || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please fill in all required fields (username, email, password)",
+      });
+    }
+
+    // Check if user already exists by email or username
+    const checkUser = await User.findOne({
+      $or: [{ email }, { userName }],
+    });
 
     if (checkUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exists with the same email",
+        message:
+          checkUser.email === email
+            ? "User already exists with the same email"
+            : "User already exists with the same username",
       });
     }
 
@@ -37,6 +49,13 @@ const registerUser = async (req, res) => {
   } catch (e) {
     console.log(e);
 
+    if (e.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "User with this email or username already exists!",
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Some error occured",
@@ -49,6 +68,13 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter both email and password!",
+      });
+    }
+
     const checkUser = await User.findOne({ email });
 
     if (!checkUser)
@@ -73,7 +99,7 @@ const loginUser = async (req, res) => {
         id: checkUser._id,
         role: checkUser.role,
         email: checkUser.email,
-        userName :checkUser.userName,
+        userName: checkUser.userName,
       },
       "CLIENT_SECRET_KEY",
       { expiresIn: "60m" }
@@ -91,6 +117,7 @@ const loginUser = async (req, res) => {
           email: checkUser.email,
           role: checkUser.role,
           id: checkUser._id,
+          userName: checkUser.userName,
         },
       });
   } catch (e) {
@@ -110,6 +137,7 @@ const logoutUser = (req, res) => {
     message: "Logged out successfully!",
   });
 };
+
 const authMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
 
@@ -132,6 +160,7 @@ const authMiddleware = async (req, res, next) => {
     });
   }
 };
+
 module.exports = {
   registerUser,
   loginUser,
